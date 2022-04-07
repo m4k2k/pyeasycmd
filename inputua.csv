@@ -1,0 +1,11 @@
+InternetGatewayDevice.DeviceInfo.SoftwareVersion
+InternetGatewayDevice.LANDevice.1.Hosts.HostNumberOfEntries
+InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.ExternalIPAddress
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.Stats.Total.ReceiveBlocks
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.Stats.Total.TransmitBlocks
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.Status
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.DataPath
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.UpstreamCurrRate
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.DownstreamCurrRate
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.UpstreamMaxRate
+InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.DownstreamMaxRate
