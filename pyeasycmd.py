@@ -35,7 +35,9 @@ parser.add_argument('-i', '--inputfile', type=argparse.FileType('r'),
 parser.add_argument('-a', '--authenticate', default=False, type=bool, const=True, nargs='?', metavar="No-Value/True/False",
                     help='Use -a if authentication is required for router query, "' + secrets_file + '" is used for loading the secrets. Either supply no value or a boolean.')
 parser.add_argument('-e', '--exportfile', type=argparse.FileType('w'),
-                    help='File where the imported keys will be exported with values as csv, seperated by newlines and semicolon.')
+                    help='File where the imported keys will be exported with values in flat json format.')
+# parser.add_argument('-e', '--exportfile', type=argparse.FileType('w'),
+#                     help='File where the imported keys will be exported with values as csv, seperated by newlines and semicolon.')
 parser.add_argument('-k', '--key', type=str, nargs='*',
                     help='The key to query, example: -k "InternetGatewayDevice.DeviceInfo.SoftwareVersion"')
 

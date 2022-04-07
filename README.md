@@ -46,7 +46,7 @@ options:
   -a [No-Value/True/False], --authenticate [No-Value/True/False]
                         Use -a if authentication is required for router query, "scr.py" is used for loading the secrets. Either supply no value or a boolean.
   -e EXPORTFILE, --exportfile EXPORTFILE
-                        File where the imported keys will be exported with values as csv, seperated by newlines and semicolon.
+                        File where the imported keys will be exported with values in flat json format.
   -k [KEY ...], --key [KEY ...]
                         The key to query, example: -k "InternetGatewayDevice.DeviceInfo.SoftwareVersion"
 
