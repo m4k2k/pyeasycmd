@@ -1,7 +1,6 @@
 # pyeasycmd
+
 Simple python tool for communicating with an easybox router
-
-
 
 ## general info
 
@@ -22,4 +21,3 @@ Simple python tool for communicating with an easybox router
 | easystats.py | main executable - run this file |
 | scr.example.py | Example secrets file |
 | inputua.csv | Example file containing tested keys for unauthenticated requests |
-
