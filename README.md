@@ -10,15 +10,21 @@ Simple python tool for communicating with an easybox router
 ## general info
 
 - currently only unauthenticated requests are possible
-- tested with easybox 804
+- tested with vodafone easybox 804
 
 ## dev info
+
+### work in progress
 
 - authenticated requests are already working/tested but not yet activated as arguments
 - more unauthenticated keys are beeing tested
 - alternative export is already working/tested but not yet activated as arguments
+- write boolean / change states / control easybox
+
+### contribution
 
 - suggestions welcome
+- codereview welcome
 - pull-requests welcome
 
 ## files and what they do
