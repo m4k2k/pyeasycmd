@@ -16,6 +16,10 @@ Simple python tool for communicating with an easybox router
 
 - authenticated requests are already working/tested but not yet activated as arguments
 - more unauthenticated keys are beeing tested
+- alternative export is already working/tested but not yet activated as arguments
+
+- suggestions welcome
+- pull-requests welcome
 
 ## files and what they do
 
