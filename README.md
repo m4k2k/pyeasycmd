@@ -21,9 +21,9 @@ Simple python tool for communicating with an easybox router
 
 | File | Description |
 | --- | ---|
-| easycmd.dockerfile | docker file if you dont want to install dependencies or run shielded |
-| easyrequestlib.py | lib file providing functions to the main executable |
-| easystats.py | main executable - run this file |
+| pyeasycmd.dockerfile | docker file if you dont want to install dependencies or run shielded |
+| pyeasylib.py | lib file providing functions to the main executable |
+| pyeasycmd.py | main executable - run this file |
 | scr.example.py | Example secrets file |
 | inputua.csv | Example file containing tested keys for unauthenticated requests |
 
