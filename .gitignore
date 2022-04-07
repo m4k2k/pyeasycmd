@@ -5,12 +5,12 @@ scr.py
 *.cer
 *test*.py
 
-# Upload input examples
-!input*.csv
-
 # data output formats
 *.csv
 *.json
+
+# Upload input examples
+!input*.csv
 
 #### GITHUB PYTHON TEMPLATE
 
