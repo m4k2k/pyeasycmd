@@ -152,7 +152,8 @@ def get_login_cookie(_session, _passw, _host, _val_dm_cookie):
     logging.debug("new session cookie after login")
     logging.debug(_session.cookies)
 
-    logging.debug("get new soap cookie after login (old is automatically expiring)")
+    logging.debug(
+        "get new soap cookie after login (old is automatically expiring)")
     return get_dm_cookie(_session, _host)
 
 
@@ -169,6 +170,7 @@ def get_single_value(_property, _session, _dm_cookie, _host):
         logging.debug("Got/Returning: " + siva)
     return siva
 
+
 def post_close_con(_host, _session):
     logging.debug("Enter post_close_con")
     logging.info("Closing Connection")
@@ -178,19 +180,19 @@ def post_close_con(_host, _session):
 # key value handling:
 
 
-
 def log_keyvalue(keyval):
     for key, val in keyval.items():
-        logging.debug(key + ": " + val)   
+        logging.debug(key + ": " + val)
 
 
-def write_keyvalue_csv(keyval,filestream):
+def write_keyvalue_csv(keyval, filestream):
     for key, val in keyval.items():
         logging.debug(key + ": " + val)
         filestream.write(key + ": " + val + '\n')
     filestream.close()
 
-def write_keyvalue_json(keyval,filestream):
+
+def write_keyvalue_json(keyval, filestream):
     logging.debug("New Json Object:")
     # json_object = json.dumps(keyval, indent = 4)
     json_object = json.dumps(keyval)
