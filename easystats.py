@@ -24,7 +24,7 @@ logging.debug("secrets_file: " + secrets_file)
 logging.debug("if required to change - remind the import statement")
 
 additional_info_helptext = """
---key | --inputfile     You are able to choose only one input method, etiher by file or by key
+--key | --inputfile     You are able to choose only one input method, either by file or by key
 """
 
 parser = argparse.ArgumentParser(
