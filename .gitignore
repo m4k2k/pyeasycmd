@@ -1,14 +1,16 @@
 
 #### PROJECT SPECIFIC
 
-
 scr.py
 *.cer
-*.txt
 *test*.py
+
+# Upload input examples
+!input*.csv
+
+# data output formats
 *.csv
-
-
+*.json
 
 #### GITHUB PYTHON TEMPLATE
 
