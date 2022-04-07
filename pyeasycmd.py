@@ -1,7 +1,7 @@
 # import libraries
 import logging
 from scr import scr_ip_host, scr_passw, scr_router_pub_cert
-from easyrequestlib import *
+from pyeasylib import *
 from datetime import datetime
 import argparse
 
@@ -17,7 +17,7 @@ logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # Disable HTTP Error 302 "Resetting dropped connection" beeing logged
 # logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
-logging.info("easystats started")
+logging.info("easycmd started")
 
 secrets_file = "scr.py"
 logging.debug("secrets_file: " + secrets_file)
