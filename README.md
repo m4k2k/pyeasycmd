@@ -53,3 +53,16 @@ options:
 
 --key | --inputfile You are able to choose only one input method, either by file or by key
 ```
+
+## example usage
+
+#### homeassistant - example sensor in `configuration.yaml`
+
+```
+sensor:
+  - platform: file
+    name: DSLUpstreamMaxRate
+    file_path: /config/export/output.json
+    value_template: "{{ value_json['InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.UpstreamMaxRate'] }}"
+    unit_of_measurement: "kbit/s"
+```
