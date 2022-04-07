@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(
     description='Get metadata from easybox', epilog=additional_info_helptext)
 
 parser.add_argument('-i', '--inputfile', type=argparse.FileType('r'),
-                    help='Path to textfile containing query keys seperated by newlines.')
+                    help='Path to textfile containing query keys seperated by newlines (csv without heading and comma).')
 parser.add_argument('-a', '--authenticate', default=False, type=bool, const=True, nargs='?', metavar="No-Value/True/False",
                     help='Use -a if authentication is required for router query, "' + secrets_file + '" is used for loading the secrets. Either supply no value or a boolean.')
 parser.add_argument('-e', '--exportfile', type=argparse.FileType('w'),

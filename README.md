@@ -34,6 +34,7 @@ Simple python tool for communicating with an easybox router
 `python3 easystats.py -h`
 
 ### current output
+
 ```
 usage: easystats.py [-h] [-i INPUTFILE] [-a [No-Value/True/False]] [-e EXPORTFILE] [-k [KEY ...]]
 
@@ -42,7 +43,7 @@ Get metadata from easybox
 options:
   -h, --help            show this help message and exit
   -i INPUTFILE, --inputfile INPUTFILE
-                        Path to textfile containing query keys seperated by newlines.
+                        Path to textfile containing query keys seperated by newlines (csv without heading and comma).
   -a [No-Value/True/False], --authenticate [No-Value/True/False]
                         Use -a if authentication is required for router query, "scr.py" is used for loading the secrets. Either supply no value or a boolean.
   -e EXPORTFILE, --exportfile EXPORTFILE
