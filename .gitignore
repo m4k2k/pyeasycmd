@@ -1,3 +1,17 @@
+
+#### PROJECT SPECIFIC
+
+
+scr.py
+*.cer
+*.txt
+*test*.py
+*.csv
+
+
+
+#### GITHUB PYTHON TEMPLATE
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +141,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
