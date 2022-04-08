@@ -90,8 +90,8 @@ sleep 1
 
 docker run \
 	--rm \
-	--mount type=bind,src=/home/user/scripts/pyeasymeta,dst=/scripts \
-	easymeta:latest \
+	--mount type=bind,src=/home/user/scripts/pyeasycmd,dst=/scripts \
+	pyeasycmd:latest \
 	python3 /scripts/pyeasycmd.py --inputfile /scripts/inputua.csv --exportfile /scripts/outputua.json
 
 sleep 3
@@ -109,6 +109,8 @@ restart the cron service with `service cron restart` to enforce creating a log
 example crontab entry to run the script hourly
 
 `@hourly sh /home/user/scripts/start_script.sh`
+
+(dont forget to chmod +x the script file)
 
 ### misc example scripts
 
