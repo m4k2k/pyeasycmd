@@ -72,7 +72,56 @@ options:
 sensor:
   - platform: file
     name: DSLUpstreamMaxRate
-    file_path: /config/export/output.json
+    file_path: /config/export/outputua.json
     value_template: "{{ value_json['InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.UpstreamMaxRate'] }}"
     unit_of_measurement: "kbit/s"
+```
+#### create start script
+
+example shell (linux) script:
+`start_script.sh`
+```
+#!/bin/sh
+
+echo "current time $(date)"
+echo "script started at $(date)" >> /home/user/log/start_script.log
+
+sleep 1
+
+docker run \
+	--rm \
+	--mount type=bind,src=/home/user/scripts/pyeasymeta,dst=/scripts \
+	easymeta:latest \
+	python3 /scripts/pyeasycmd.py --inputfile /scripts/inputua.csv --exportfile /scripts/outputua.json
+
+sleep 3
+echo copy file to folder where home assistant has access
+cp --force /home/user/scripts/pyeasycmd/outputua.txt /home/user/homeass_config/export/outputua.json
+```
+
+#### cron job runing the `start_script.sh`
+
+use `crontab -e` to 'edit' the crontab file
+once done, use `crontab -l` to see if the crontab has been added sucessfully
+with `service cron status` check the current cron log
+restart the cron service with `service cron restart` to enforce creating a log
+
+example crontab entry to run the script hourly:
+
+`@hourly sh /home/user/scripts/start_script.sh`
+
+#### misc example scripts
+
+```
+# manually run - get information for one key
+python3 /home/user/scripts/pyeasycmd.py -k "InternetGatewayDevice.DeviceInfo.SoftwareVersion"
+
+# build the docker image - run one level up of the root folder "pyeasycmd"
+docker build --tag pyeasycmd:latest --file ./pyeasycmd/pyeasycmd.dockerfile .
+
+# for debug/dev: run bash inside the container
+docker run -it --rm pyeasycmd:latest /bin/bash
+
+# get information for one key using docker
+docker run -it -e "cmd=-k InternetGatewayDevice.DeviceInfo.SoftwareVersion" --rm pyeasycmd:latest
 ```
