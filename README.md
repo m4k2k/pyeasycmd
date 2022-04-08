@@ -66,7 +66,7 @@ options:
 
 ## example usage
 
-#### homeassistant - example sensor in `configuration.yaml`
+### homeassistant - example sensor in `configuration.yaml`
 
 ```
 sensor:
@@ -76,7 +76,7 @@ sensor:
     value_template: "{{ value_json['InternetGatewayDevice.WANDevice.6.WANDSLInterfaceConfig.UpstreamMaxRate'] }}"
     unit_of_measurement: "kbit/s"
 ```
-#### create start script
+### create start script
 
 example shell (linux) script:
 `start_script.sh`
@@ -99,18 +99,18 @@ echo copy file to folder where home assistant has access
 cp --force /home/user/scripts/pyeasycmd/outputua.txt /home/user/homeass_config/export/outputua.json
 ```
 
-#### cron job runing the `start_script.sh`
+### cron job runing the `start_script.sh`
 
 use `crontab -e` to 'edit' the crontab file
 once done, use `crontab -l` to see if the crontab has been added sucessfully
 with `service cron status` check the current cron log
 restart the cron service with `service cron restart` to enforce creating a log
 
-example crontab entry to run the script hourly:
+example crontab entry to run the script hourly
 
 `@hourly sh /home/user/scripts/start_script.sh`
 
-#### misc example scripts
+### misc example scripts
 
 ```
 # manually run - get information for one key
