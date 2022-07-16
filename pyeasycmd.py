@@ -4,6 +4,8 @@ from scr import scr_ip_host, scr_passw, scr_router_pub_cert
 from pyeasylib import *
 from datetime import datetime
 import argparse
+import requests
+
 
 LOG_LEVEL = logging.ERROR
 LOG_LEVEL = logging.DEBUG
@@ -40,6 +42,8 @@ parser.add_argument('-e', '--exportfile', type=argparse.FileType('w'),
 #                     help='File where the imported keys will be exported with values as csv, seperated by newlines and semicolon.')
 parser.add_argument('-k', '--key', type=str, nargs='*',
                     help='The key to query, example: -k "InternetGatewayDevice.DeviceInfo.SoftwareVersion"')
+parser.add_argument('-m', '--multikey', type=str, nargs='*',
+                    help='A key to query with an array as a result, example: -m "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANIPConnection.1.PortMapping."')
 
 logging.debug("Checking for Args..")
 args = parser.parse_args()
@@ -82,10 +86,10 @@ def get_print_unauth():
             key, s, val_dm_cookie, router_ip_host)
 
     for key, val in unauth_sp.items():
-        print(key, ": ", val, sep="")
+        logging.debug("%s: %s", key, val)
 
 
-def get_print_auth():
+def get_print_auth(_val_dm_cookie):
 
     # only authenticated
     auth_sp = {
@@ -96,18 +100,24 @@ def get_print_auth():
         "InternetGatewayDevice.LANDevice.1.LANWLANConfigurationNumberOfEntries": "",
         "InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DNSServers": "",
         "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.DNSServers": "",
-        "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.PortMappingNumberOfEntries": ""
+        "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.PortMappingNumberOfEntries": "",
+        "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.PortMapping.": ""
     }
 
-    # get authenticated login cookie
-    val_dm_cookie = get_login_cookie(s, passw, router_ip_host, val_dm_cookie)
+    auth_sp = {
+        "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.PortMappingNumberOfEntries": "",
+        "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.PortMapping.": "",
+        "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANIPConnection.1.PortMapping.": ""
+    }
+
+    # get authenticated soap login cookie (overwrite existing)
+    # logging.debug("Current val_dm_cookie: " + val_dm_cookie)
+    val_dm_cookie = get_login_cookie(s, passw, router_ip_host, _val_dm_cookie)
 
     for key, val in auth_sp.items():
         auth_sp[key] = get_single_value(key, s, val_dm_cookie, router_ip_host)
 
-    for key, val in auth_sp.items():
-        print(key, ": ", val, sep="")
-
+    log_key_value(auth_sp)
 
 if __name__ == '__main__':
 
@@ -116,47 +126,70 @@ if __name__ == '__main__':
     router_ip_host = scr_ip_host
     router_pub_cert = scr_router_pub_cert
 
-    # setup session
-    s = get_session(_verify=router_pub_cert)
-    # get soap cookie, session cookie is stored in session
-    val_dm_cookie = get_dm_cookie(_session=s, _host=router_ip_host)
+    # setup session and handle exit
+    with get_session(_verify=router_pub_cert) as s:
 
-    if(args.key):
-        logging.debug("key arg provided")
-        logging.debug(args.key)
-        newkeys = {key: "" for key in args.key}
-        logging.debug(newkeys)
+        # get soap cookie, session cookie is stored in session
+        val_dm_cookie = get_dm_cookie(_session=s, _host=router_ip_host)
 
-        for key, val in newkeys.items():
-            newkeys[key] = get_single_value(
-                key, s, val_dm_cookie, router_ip_host)
+        if(args.multikey):
+            logging.debug("multikey arg provided")
+            logging.debug(args.multikey)
+            # TODO: next -> get Multi Value Response (and understand it, see log ports)
+            # do auth
+            val_dm_cookie = get_login_cookie(s, passw, router_ip_host, val_dm_cookie)
+            resp2: requests.models.Response.content = send_get_property(
+                args.multikey[0], s, val_dm_cookie, router_ip_host)
+            # woanders auch direkt als root bezeichnet
+            tree = ET.fromstring(resp2.content)
+            log_debug_tree(tree)
+            res = interpret_ParameterValueStruct(tree)
+            logging.debug("returning dict:")
+            log_key_value(res)
+            #! alternate solution required, duplicate export code!
+            if(args.exportfile):
+                write_keyvalue_json(res, args.exportfile)
 
-        log_keyvalue(newkeys)
-        # write_keyvalue_csv(newkeys, args.exportfile)
-        if(args.exportfile):
-            write_keyvalue_json(newkeys, args.exportfile)
+        if(args.key):
+            logging.debug("key arg provided")
+            logging.debug(args.key)
+            newkeys = {key: "" for key in args.key}
+            logging.debug(newkeys)
 
-    if(args.inputfile):
-        logging.debug("inputfile arg provided")
-        str_readdata = args.inputfile.read()
-        logging.debug(str_readdata)
-        print("check file")
-        ary_readdata = str_readdata.split()
-        logging.debug(ary_readdata)
+            # singe with multi?
+            # function that checks reply
+            # if single or array, then interpret
+            for key, val in newkeys.items():
+                newkeys[key] = get_single_value(
+                    key, s, val_dm_cookie, router_ip_host)
 
-        newkeys = {key: "" for key in ary_readdata}
-        logging.debug(newkeys)
+            log_keyvalue(newkeys)
+            # write_keyvalue_csv(newkeys, args.exportfile)
+            if(args.exportfile):
+                write_keyvalue_json(newkeys, args.exportfile)
 
-        for key, val in newkeys.items():
-            newkeys[key] = get_single_value(
-                key, s, val_dm_cookie, router_ip_host)
+        if(args.inputfile):
+            logging.debug("inputfile arg provided")
+            str_readdata = args.inputfile.read()
+            logging.debug(str_readdata)
+            logging.debug("check file")
+            ary_readdata = str_readdata.split()
+            logging.debug(ary_readdata)
 
-        log_keyvalue(newkeys)
-        # write_keyvalue_csv(newkeys, args.exportfile)
-        if(args.exportfile):
-            write_keyvalue_json(newkeys, args.exportfile)
+            newkeys = {key: "" for key in ary_readdata}
+            logging.debug(newkeys)
 
-    # get_print_unauth()
+            for key, val in newkeys.items():
+                newkeys[key] = get_single_value(
+                    key, s, val_dm_cookie, router_ip_host)
 
-    post_close_con(router_ip_host, s)
-    logging.debug("app exit/eof")
+            log_keyvalue(newkeys)
+            # write_keyvalue_csv(newkeys, args.exportfile)
+            if(args.exportfile):
+                write_keyvalue_json(newkeys, args.exportfile)
+
+        # get_print_unauth()
+        # get_print_auth(val_dm_cookie)
+
+        post_close_con(router_ip_host, s)
+        logging.debug("app exit/eof")
