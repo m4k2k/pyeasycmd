@@ -119,7 +119,7 @@ example crontab entry to run the script hourly
 python3 /home/user/scripts/pyeasycmd.py -k "InternetGatewayDevice.DeviceInfo.SoftwareVersion"
 
 # build the docker image - run one level up of the root folder "pyeasycmd"
-docker build --tag pyeasycmd:latest --file ./pyeasycmd/pyeasycmd.dockerfile .
+docker build --tag pyeasycmd:latest --file ./pyeasycmd/pyeasycmd.dockerfile ./pyeasycmd
 
 # for debug/dev: run bash inside the container
 docker run -it --rm pyeasycmd:latest /bin/bash
