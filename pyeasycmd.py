@@ -1,13 +1,15 @@
 # import libraries
 import logging
 from scr import scr_ip_host, scr_passw, scr_router_pub_cert
-from pyeasylib import *
-from datetime import datetime
+#from pyeasylib import *
+from pyeasylib import get_single_value, log_keyvalue, get_login_cookie, get_session, get_dm_cookie, send_get_property, write_keyvalue_json, post_close_con, log_debug_tree, interpret_ParameterValueStruct
+#from datetime import datetime
 import argparse
 import requests
+import xml.etree.ElementTree as ET
 
 
-LOG_LEVEL = logging.ERROR
+#LOG_LEVEL = logging.ERROR
 LOG_LEVEL = logging.DEBUG
 
 # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
@@ -51,7 +53,7 @@ logging.debug("Found Args:")
 logging.debug(args)
 logging.debug(
     "Checking for argument combination --inputfile and --key - throw error if found")
-if((args.key) and (args.inputfile)):
+if ((args.key) and (args.inputfile)):
     parser.error("Combination of --inputfile and --key detected" +
                  additional_info_helptext)
 
@@ -60,14 +62,14 @@ def get_print_unauth():
 
     logging.debug("Entering get_print_unauth")
 
-    unauth_host = {
+    unauth_host: dict[str, str] = {
         "InternetGatewayDevice.LANDevice.1.Hosts.": "",
         "InternetGatewayDevice.LANDevice.1.Hosts.Host.": ""
     }
 
     # CSV according to RFC 4180
     # single property keys which are working unauthenticated
-    unauth_sp = {
+    unauth_sp: dict[str, str] = {
         "InternetGatewayDevice.DeviceInfo.SoftwareVersion": "",
         "InternetGatewayDevice.LANDevice.1.Hosts.HostNumberOfEntries": "",
         "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANPPPConnection.1.ExternalIPAddress": "",
@@ -89,7 +91,7 @@ def get_print_unauth():
         logging.debug("%s: %s", key, val)
 
 
-def get_print_auth(_val_dm_cookie):
+def get_print_auth(_val_dm_cookie: str):
 
     # only authenticated
     auth_sp = {
@@ -112,18 +114,20 @@ def get_print_auth(_val_dm_cookie):
 
     # get authenticated soap login cookie (overwrite existing)
     # logging.debug("Current val_dm_cookie: " + val_dm_cookie)
-    val_dm_cookie = get_login_cookie(s, passw, router_ip_host, _val_dm_cookie)
+    val_dm_cookie: str = get_login_cookie(
+        s, passw, router_ip_host, _val_dm_cookie)
 
     for key, val in auth_sp.items():
         auth_sp[key] = get_single_value(key, s, val_dm_cookie, router_ip_host)
 
-    log_key_value(auth_sp)
+    log_keyvalue(auth_sp)
+
 
 if __name__ == '__main__':
 
     # import secrets
-    passw = scr_passw
-    router_ip_host = scr_ip_host
+    passw: str = scr_passw
+    router_ip_host: str = scr_ip_host
     router_pub_cert = scr_router_pub_cert
 
     # setup session and handle exit
@@ -132,25 +136,26 @@ if __name__ == '__main__':
         # get soap cookie, session cookie is stored in session
         val_dm_cookie = get_dm_cookie(_session=s, _host=router_ip_host)
 
-        if(args.multikey):
+        if (args.multikey):
             logging.debug("multikey arg provided")
             logging.debug(args.multikey)
             # TODO: next -> get Multi Value Response (and understand it, see log ports)
             # do auth
-            val_dm_cookie = get_login_cookie(s, passw, router_ip_host, val_dm_cookie)
-            resp2: requests.models.Response.content = send_get_property(
+            val_dm_cookie = get_login_cookie(
+                s, passw, router_ip_host, val_dm_cookie)
+            resp2: requests.models.Response = send_get_property(
                 args.multikey[0], s, val_dm_cookie, router_ip_host)
             # woanders auch direkt als root bezeichnet
-            tree = ET.fromstring(resp2.content)
+            tree: ET.ElementTree = ET.fromstring(resp2.content)
             log_debug_tree(tree)
             res = interpret_ParameterValueStruct(tree)
             logging.debug("returning dict:")
-            log_key_value(res)
+            log_keyvalue(res)
             #! alternate solution required, duplicate export code!
-            if(args.exportfile):
+            if (args.exportfile):
                 write_keyvalue_json(res, args.exportfile)
 
-        if(args.key):
+        if (args.key):
             logging.debug("key arg provided")
             logging.debug(args.key)
             newkeys = {key: "" for key in args.key}
@@ -165,10 +170,10 @@ if __name__ == '__main__':
 
             log_keyvalue(newkeys)
             # write_keyvalue_csv(newkeys, args.exportfile)
-            if(args.exportfile):
+            if (args.exportfile):
                 write_keyvalue_json(newkeys, args.exportfile)
 
-        if(args.inputfile):
+        if (args.inputfile):
             logging.debug("inputfile arg provided")
             str_readdata = args.inputfile.read()
             logging.debug(str_readdata)
@@ -185,7 +190,7 @@ if __name__ == '__main__':
 
             log_keyvalue(newkeys)
             # write_keyvalue_csv(newkeys, args.exportfile)
-            if(args.exportfile):
+            if (args.exportfile):
                 write_keyvalue_json(newkeys, args.exportfile)
 
         # get_print_unauth()
