@@ -1,31 +1,29 @@
-
 import hashlib
+from typing import Any
 import requests
 import re
-from requests import Session
 import xml.etree.ElementTree as ET
-import xml
 import logging
 import json
 
 basic_header = {"content-type": "text/xml"}
 
-
-def get_session(_verify: bool=True) -> requests.sessions.Session:
+def get_session(_verify: bool = True) -> requests.Session:
     _se = requests.Session()
     _se.verify = _verify
     return _se
 
-def send_emptyrequest(_session, _host):
+
+def send_emptyrequest(_session: requests.Session, _host: str) -> requests.Response:
     logging.debug("Enter send_emptyrequest")
-    url = "https://" + _host + "/main.cgi"
+    url: str = "https://" + _host + "/main.cgi"
     body = ""
     repl = _session.post(url, data=body, headers=basic_header)
     # print_raw_response(repl)
     return repl
 
 
-def send_get_rsconfig(_session, _host):
+def send_get_rsconfig(_session: requests.Session, _host: str) -> requests.Response:
     logging.debug("Enter send_get_rsconfig")
     url = "https://" + _host + "/main.cgi?js=rg_config.js"
     body = ""
@@ -34,18 +32,18 @@ def send_get_rsconfig(_session, _host):
     return repl
 
 
-def get_dm_cookie(_session, _host) -> str:
+def get_dm_cookie(_session: requests.Session, _host: str) -> str:
     logging.debug("Enter get_dm_cookie")
     resp = send_emptyrequest(_session, _host)
     logging.debug("dm_cookie is the soap cookie used")
-    a = re.search("dm_cookie=\\'([\w\d]*)\\'", resp.text)
+    a: re.Match[str] | None = re.search("dm_cookie=\\'([\w\d]*)\\'", resp.text)
     logging.debug("regex result is in capturegroup 1")
-    cookie = a[1]
+    cookie: str = a[1]
     logging.info("Found SOAP(DM) Cookie: " + cookie)
     return cookie
 
 
-def send_get_property(_property, _session, _dmcookie, _host):
+def send_get_property(_property: str, _session: requests.Session, _dmcookie: str, _host: str) -> requests.Response:
     logging.debug("Enter send_get_property")
     url_data_model = "https://" + _host + "/data_model.cgi"
     body_request = """
@@ -73,27 +71,27 @@ def send_get_property(_property, _session, _dmcookie, _host):
 
     # print("Raw Request Body:")
     # print(body_request)
-
-    resp_body: requests.models.Response.content = _session.post(
+    #returns requests.models.Response.content
+    resp_body: requests.Response = _session.post(
         url_data_model, data=body_request, headers=soap_header)
 
     log_debug_raw_response(resp_body)
-
+    #resp_body.content.decode("utf-8")
     return resp_body
 
 
-def get_authkey(_session, _host):
+def get_authkey(_session: requests.Session, _host: str) -> str:
     logging.debug("Enter get_authkey")
     rsconfig = send_get_rsconfig(_session, _host)
-    find_auth_key = re.search("var auth_key = \'(\d*)\'", rsconfig.text)
+    find_auth_key: re.Match[str] = re.search("var auth_key = \'(\d*)\'", rsconfig.text)
     # take auth_key from capture group
-    find_auth_key = find_auth_key[1]
+    _auth_key: str = find_auth_key[1]
     logging.info("found authkey:")
-    logging.info(find_auth_key)
-    return find_auth_key
+    logging.info(_auth_key)
+    return _auth_key
 
 
-def get_login_cookie(_session, _passw, _host, _val_dm_cookie) -> str:
+def get_login_cookie(_session: requests.Session, _passw: str, _host: str, _val_dm_cookie: str) -> str:
     logging.debug("Enter get_login_cookie")
     auth_key = get_authkey(_session, _host)
     soap = """
@@ -125,7 +123,8 @@ def get_login_cookie(_session, _passw, _host, _val_dm_cookie) -> str:
 
     logging.debug("session cookie before login")
     logging.debug(_session.cookies)
-    repl = _session.post(url_data_model, data=soap, headers=soap_head)
+    repl: requests.Response = _session.post(url_data_model, data=soap, headers=soap_head)
+    #TODO: check if response holds info of result (success/fail)
 
     logging.debug("reply of login")
     # print_raw_response(repl)
@@ -138,10 +137,11 @@ def get_login_cookie(_session, _passw, _host, _val_dm_cookie) -> str:
     return get_dm_cookie(_session, _host)
 
 
-def get_single_value(_property, _session, _dm_cookie, _host):
+def get_single_value(_property: str, _session: requests.Session, _dm_cookie: str, _host: str) -> str | None:
     logging.debug("get_single_value")
-    res = send_get_property(_property, _session, _dm_cookie, _host)
-    tree = ET.fromstring(res.content)
+    res: requests.Response = send_get_property(_property, _session, _dm_cookie, _host)
+    recon: str = res.content.decode("utf-8")
+    tree = ET.fromstring(recon)
     siva = tree.findtext("*//Value")
     if siva == None:
         logging.debug("no value received, returning error as value")
@@ -152,64 +152,44 @@ def get_single_value(_property, _session, _dm_cookie, _host):
     return siva
 
 
-def post_close_con(_host, _session):
+def post_close_con(_host: str, _session: requests.Session) -> None:
     logging.debug("Enter post_close_con")
     logging.info("Closing Connection")
     url = "https://" + _host + "/main.cgi?page=login.html"
     _session.post(url=url, data="", headers={'Connection': 'close'})
 
-
-
 #################################################################################
-
-#                            SEND / RECEIVE / SESSION
-
-
-
-
-#################################################################################
-
 #                            HANDLE XML
+#################################################################################
 
 
-def get_single_value(_property, _session, _dm_cookie, _host):
-    logging.debug("get_single_value")
-    res = send_get_property(_property, _session, _dm_cookie, _host)
-    tree = ET.fromstring(res.content)
-    siva = tree.findtext("*//Value")
-    if siva == None:
-        logging.debug("no value received, returning error as value")
-        siva = tree.findtext("*//FaultLang")
-    else:
-        # logging.debug("'", siva, "'")
-        logging.debug("Got/Returning: " + siva)
-    return siva
-
-# transform the tr069 ParameterValueStruct to dict
-def ParameterValueStruct_to_dict(_xmltree: xml.etree.ElementTree.Element) -> dict:
-    kvp: dict = {}
+def ParameterValueStruct_to_dict(_xmltree: ET.Element) -> dict[str, str]:
+    """transform the tr069 ParameterValueStruct to dict"""
+    kvp: dict[str, str] = {}
     for elem in _xmltree:
-        if(elem[0].text is not None):
+        if (elem[0].text is not None):
             kvp[elem[0].text] = ""
-            if(elem[1].text is not None):
+            if (elem[1].text is not None):
                 kvp[elem[0].text] = elem[1].text
     return kvp
 
+
 # Gets down xml levels by a specified list of keys
-def GetLowerElement(_root: xml.etree.ElementTree.Element, _level: list) -> xml.etree.ElementTree.Element:
+def GetLowerElement(_root: ET.Element, _level: list[str]) -> ET.Element:
     logging.debug("Enter GetLowerElement")
-    res: xml.etree.ElementTree.Element = _root
-    for l in _level:
-        if(type(res)):
-            logging.debug("getting down to: " + l)
-            res = res.find(l)
+    res: ET.Element = _root
+    for _lev in _level:
+        if (type(res)):
+            logging.debug("getting down to: " + _lev)
+            res: ET.Element = res.find(_lev)
     return res
 
+
 # interprets the xml response of a parametervaluestruct
-def interpret_ParameterValueStruct(val: xml.etree.ElementTree.Element) -> dict:
+def interpret_ParameterValueStruct(val: ET.Element) -> dict[str, str]:
     logging.debug("interpret_ParameterValueStruct")
     logging.debug("defining level to get down:")
-    lvl: list = [
+    lvl: list[str] = [
         '{http://schemas.xmlsoap.org/soap/envelope/}Body',
         '{urn:dslforum-org:cwmp-1-0}GetParameterValuesResponse',
         'ParameterList'
@@ -218,16 +198,14 @@ def interpret_ParameterValueStruct(val: xml.etree.ElementTree.Element) -> dict:
     le = GetLowerElement(_root=val, _level=lvl)
     return ParameterValueStruct_to_dict(le)
 
-def log_key_value(kv):
-    for key, val in kv.items():
-        logging.debug(f'{key}: "{val}"')
 
-def log_debug_tree(_tree):
+def log_debug_tree(_tree: ET.ElementTree):
     logging.debug("log_debug_tree:")
     for elem in _tree.iter():
         log_debug_element(elem)
 
-def log_debug_element(_elem):
+
+def log_debug_element(_elem: ET.Element):
     logging.debug("attrib: %s", _elem.attrib)
     logging.debug("tag: %s", _elem.tag)
     logging.debug("text: %s\n", _elem.text)
@@ -237,14 +215,15 @@ def log_debug_element(_elem):
 #                            IMPORT / EXPORT / LOG
 
 
-def log_keyvalue(keyval):
+def log_keyvalue(keyval: dict[str, str]):
     for key, val in keyval.items():
         logging.debug(key + ": " + val)
 
 
-def log_type(_var,_varname:str):
+def log_type(_var: Any, _varname: str):
     logging.debug("type of " + _varname + " is currently:")
     logging.debug(type(_var))
+
 
 def log_debug_raw_response(resp: requests.Response):
     logging.debug("Raw Cookie:")
@@ -255,15 +234,15 @@ def log_debug_raw_response(resp: requests.Response):
     logging.debug(resp.text)
 
 
-
-def write_keyvalue_csv(keyval, filestream):
+#TODO: check if type TextIOWrapper is better fitting
+def write_keyvalue_csv(keyval: dict[str, str], filestream: Any):
     for key, val in keyval.items():
         logging.debug(key + ": " + val)
         filestream.write(key + ": " + val + '\n')
     filestream.close()
 
 
-def write_keyvalue_json(keyval, filestream):
+def write_keyvalue_json(keyval: dict[str, str], filestream: Any):
     logging.debug("New Json Object:")
     # json_object = json.dumps(keyval, indent = 4)
     json_object = json.dumps(keyval)
@@ -271,7 +250,6 @@ def write_keyvalue_json(keyval, filestream):
     logging.debug("Writing JSON to file:")
     filestream.write(json_object)
     filestream.close()
-
 
 
 #################################################################################
