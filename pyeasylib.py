@@ -8,7 +8,8 @@ import json
 
 basic_header = {"content-type": "text/xml"}
 
-def get_session(_verify: bool = True) -> requests.Session:
+
+def get_session(_verify: str | bool = True) -> requests.Session:
     _se = requests.Session()
     _se.verify = _verify
     return _se
@@ -71,19 +72,20 @@ def send_get_property(_property: str, _session: requests.Session, _dmcookie: str
 
     # print("Raw Request Body:")
     # print(body_request)
-    #returns requests.models.Response.content
+    # returns requests.models.Response.content
     resp_body: requests.Response = _session.post(
         url_data_model, data=body_request, headers=soap_header)
 
     log_debug_raw_response(resp_body)
-    #resp_body.content.decode("utf-8")
+    # resp_body.content.decode("utf-8")
     return resp_body
 
 
 def get_authkey(_session: requests.Session, _host: str) -> str:
     logging.debug("Enter get_authkey")
     rsconfig = send_get_rsconfig(_session, _host)
-    find_auth_key: re.Match[str] = re.search("var auth_key = \'(\d*)\'", rsconfig.text)
+    find_auth_key: re.Match[str] = re.search(
+        "var auth_key = \'(\d*)\'", rsconfig.text)
     # take auth_key from capture group
     _auth_key: str = find_auth_key[1]
     logging.info("found authkey:")
@@ -123,8 +125,9 @@ def get_login_cookie(_session: requests.Session, _passw: str, _host: str, _val_d
 
     logging.debug("session cookie before login")
     logging.debug(_session.cookies)
-    repl: requests.Response = _session.post(url_data_model, data=soap, headers=soap_head)
-    #TODO: check if response holds info of result (success/fail)
+    repl: requests.Response = _session.post(
+        url_data_model, data=soap, headers=soap_head)
+    # TODO: check if response holds info of result (success/fail)
 
     logging.debug("reply of login")
     # print_raw_response(repl)
@@ -139,7 +142,8 @@ def get_login_cookie(_session: requests.Session, _passw: str, _host: str, _val_d
 
 def get_single_value(_property: str, _session: requests.Session, _dm_cookie: str, _host: str) -> str | None:
     logging.debug("get_single_value")
-    res: requests.Response = send_get_property(_property, _session, _dm_cookie, _host)
+    res: requests.Response = send_get_property(
+        _property, _session, _dm_cookie, _host)
     recon: str = res.content.decode("utf-8")
     tree = ET.fromstring(recon)
     siva = tree.findtext("*//Value")
@@ -234,7 +238,7 @@ def log_debug_raw_response(resp: requests.Response):
     logging.debug(resp.text)
 
 
-#TODO: check if type TextIOWrapper is better fitting
+# TODO: check if type TextIOWrapper is better fitting
 def write_keyvalue_csv(keyval: dict[str, str], filestream: Any):
     for key, val in keyval.items():
         logging.debug(key + ": " + val)
