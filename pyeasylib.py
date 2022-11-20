@@ -179,13 +179,14 @@ def ParameterValueStruct_to_dict(_xmltree: ET.Element) -> dict[str, str]:
 
 
 # Gets down xml levels by a specified list of keys
-def GetLowerElement(_root: ET.Element, _level: list[str]) -> ET.Element:
+def GetLowerElement(_root: ET.Element, _level: list[str]) -> ET.Element | None:
     logging.debug("Enter GetLowerElement")
-    res: ET.Element = _root
+    res: ET.Element | None = _root
     for _lev in _level:
         if (type(res)):
             logging.debug("getting down to: " + _lev)
-            res: ET.Element = res.find(_lev)
+            if res is not None:
+                res = res.find(_lev)
     return res
 
 
@@ -200,7 +201,10 @@ def interpret_ParameterValueStruct(val: ET.Element) -> dict[str, str]:
     ]
     logging.debug(lvl)
     le = GetLowerElement(_root=val, _level=lvl)
-    return ParameterValueStruct_to_dict(le)
+    if le is not None:
+        return ParameterValueStruct_to_dict(le)
+    else:
+        return {}
 
 
 def log_debug_tree(_tree: ET.ElementTree):
