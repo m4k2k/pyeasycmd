@@ -6,6 +6,9 @@ import xml.etree.ElementTree as ET
 import logging
 import json
 
+import aiohttp
+import ssl
+
 basic_header = {"content-type": "text/xml"}
 
 
@@ -22,10 +25,37 @@ logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('pyeasycmd')
 
 
+async def get_session_async_aio(_verify: str) -> aiohttp.ClientSession:
+    logger = logging.getLogger("pyeasycmd" + "." + "get_session_async_aio")
+    logger.debug("ENTER get_session_async_aio")
+    logger.debug("create context")
+    sslcontext = ssl.create_default_context(cafile=_verify)
+    logger.debug("create connector")
+    conn = aiohttp.TCPConnector(ssl=sslcontext)
+    logger.info("start session")
+    _se = aiohttp.ClientSession(connector=conn)
+    logger.debug("EXIT get_session_async_aio")
+    return _se
+
+
 def get_session(_verify: str | bool = True) -> requests.Session:
     _se = requests.Session()
     _se.verify = _verify
     return _se
+
+
+async def send_emptyrequest_async_aio(_session: aiohttp.ClientSession, _host: str) -> aiohttp.ClientResponse:
+    logger = logging.getLogger("pyeasycmd" + "." + "send_emptyrequest_async")
+    logger.debug("ENTER send_emptyrequest")
+    url: str = "https://" + _host + "/main.cgi"
+    body = ""
+    logger.debug("async post")
+    req = _session.post(url=url, data=body, headers=basic_header)
+    repl = await req
+    logger.debug("##### reply:")
+    log_debug_raw_response(repl)
+    logger.debug("EXIT send_emptyrequest")
+    return repl
 
 
 def send_emptyrequest(_session: requests.Session, _host: str) -> requests.Response:
@@ -46,6 +76,40 @@ def send_get_rsconfig(_session: requests.Session, _host: str) -> requests.Respon
     return repl
 
 
+# async def get_dm_cookie_async(_session: requests.Session, _host: str) -> str:
+#     logger = logging.getLogger("pyeasycmd" + "." + "get_dm_cookie_async")
+#     logger.debug("ENTER get_dm_cookie_async")
+#     resp = await send_emptyrequest_async_aio(_session, _host)
+#     logger.debug("got response: ")
+#     logger.debug(resp)
+#     logger.debug("dm_cookie is the soap cookie used")
+#     a: re.Match[str] | None = re.search("dm_cookie=\\'([\w\d]*)\\'", resp.text)
+#     logger.debug("regex result is in capturegroup 1")
+#     cookie: str = a[1]
+#     logger.info("Found SOAP(DM) Cookie: " + cookie)
+#     logger.debug("EXIT get_dm_cookie_async")
+#     return cookie
+
+async def get_dm_cookie_async_aio(_session: aiohttp.ClientSession, _host: str) -> str:
+    logger = logging.getLogger("pyeasycmd" + "." + "get_dm_cookie_async")
+    logger.debug("ENTER get_dm_cookie_async")
+    resp = await send_emptyrequest_async_aio(_session, _host)
+    logger.debug("got response: ")
+    logger.debug(resp)
+    res_tx = await resp.text()
+    logger.debug("dm_cookie is the soap cookie used")
+    reg_match: (re.Match[str] | None) = re.search("dm_cookie=\\'([\\w\\d]*)\\'", res_tx)
+    if (reg_match is not None):
+        # regex result is in capturegroup 1
+        cookie: str = reg_match[1]
+        logger.info("Found SOAP(DM) Cookie: " + cookie)
+    else:
+        cookie: str = "No cookie found"
+        logger.error("No cookie found")
+    logger.debug("EXIT get_dm_cookie_async")
+    return cookie
+
+
 def get_dm_cookie(_session: requests.Session, _host: str) -> str:
     logging.debug("Enter get_dm_cookie")
     resp = send_emptyrequest(_session, _host)
@@ -59,6 +123,40 @@ def get_dm_cookie(_session: requests.Session, _host: str) -> str:
     else:
         return ""
 
+
+async def send_get_property_async_aio(_property: str, _session: aiohttp.ClientSession, _dmcookie: str, _host: str) -> aiohttp.ClientResponse:
+    loggger = logging.getLogger("pyeasycmd" + "." + "send_get_property_async_aio")
+    loggger.debug("Enter send_get_property_async_aio")
+    url_data_model = "https://" + _host + "/data_model.cgi"
+    body_request = """
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+        <soapenv:Header>
+            <DMCookie>#cookie#</DMCookie>
+            <SessionNotRefresh>1</SessionNotRefresh>
+        </soapenv:Header>
+        <soapenv:Body>
+            <cwmp:GetParameterValues xmlns="">
+                <ParameterNames>
+                    <string>#reqprop#</string>
+                </ParameterNames>
+            </cwmp:GetParameterValues>
+        </soapenv:Body>
+    </soapenv:Envelope>
+    """
+
+    body_request = body_request.replace("#cookie#", _dmcookie)
+    body_request = body_request.replace("#reqprop#", _property)
+
+    soap_header = basic_header
+    soap_header.update(
+        {"SOAPAction": "cwmp:GetParameterValues", "SOAPServer": ""})
+
+    req = _session.post(url=url_data_model, data=body_request, headers=soap_header)
+    resp_body = await req
+
+    log_debug_raw_response(resp_body)
+    # resp_body.content.decode("utf-8")
+    return resp_body
 
 
 def send_get_property(_property: str, _session: requests.Session, _dmcookie: str, _host: str) -> requests.Response:
@@ -161,6 +259,22 @@ def get_login_cookie(_session: requests.Session, _passw: str, _host: str, _val_d
     return get_dm_cookie(_session, _host)
 
 
+async def get_single_value_async_aio(_property: str, _session: aiohttp.ClientSession, _dm_cookie: str, _host: str) -> str | None:
+    logger = logging.getLogger("pyeasycmd" + "." + "get_single_value_async_aio")
+    logger.debug("get_single_value")
+    res: aiohttp.ClientResponse = await send_get_property_async_aio(_property, _session, _dm_cookie, _host)
+    recon: str = await res.text("utf-8")
+    tree = ET.fromstring(recon)
+    siva = tree.findtext("*//Value")
+    if siva == None:
+        logger.debug("no value received, returning error as value")
+        siva = tree.findtext("*//FaultLang")
+    else:
+        # logging.debug("'", siva, "'")
+        logger.debug("Got/Returning: " + siva)
+    return siva
+
+
 def get_single_value(_property: str, _session: requests.Session, _dm_cookie: str, _host: str) -> str | None:
     logger = logging.getLogger("pyeasycmd" + "." + "get_single_value")
     logger.debug("get_single_value")
@@ -176,6 +290,17 @@ def get_single_value(_property: str, _session: requests.Session, _dm_cookie: str
         # logging.debug("'", siva, "'")
         logger.debug("Got/Returning: " + siva)
     return siva
+
+
+async def post_close_con_async_aio(_host: str, _session: aiohttp.ClientSession) -> None:
+    logger = logging.getLogger("pyeasycmd" + "." + "post_close_con_async_aio")
+    logger.debug("ENTER post_close_con_async_aio")
+    logger.debug("Tell site to close connection")
+    url = "https://" + _host + "/main.cgi?page=login.html"
+    await _session.post(url=url, data="", headers={'Connection': 'close'})
+    logger.debug("Close Session")
+    await _session.close()
+    logger.debug("LEAVE post_close_con_async_aio")
 
 
 def post_close_con(_host: str, _session: requests.Session) -> None:
