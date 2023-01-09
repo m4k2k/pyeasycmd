@@ -9,6 +9,19 @@ import json
 basic_header = {"content-type": "text/xml"}
 
 
+
+#LOG_LEVEL = logging.ERROR
+LOG_LEVEL = logging.DEBUG
+
+# logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(encoding='utf-8', level=LOG_LEVEL,
+                    format='%(levelname)s:%(asctime)s %(message)s')
+
+logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+logger = logging.getLogger('pyeasycmd')
+
+
 def get_session(_verify: str | bool = True) -> requests.Session:
     _se = requests.Session()
     _se.verify = _verify
@@ -39,13 +52,18 @@ def get_dm_cookie(_session: requests.Session, _host: str) -> str:
     logging.debug("dm_cookie is the soap cookie used")
     a: re.Match[str] | None = re.search("dm_cookie=\\'([\w\d]*)\\'", resp.text)
     logging.debug("regex result is in capturegroup 1")
-    cookie: str = a[1]
-    logging.info("Found SOAP(DM) Cookie: " + cookie)
-    return cookie
+    if (a is not None):
+        cookie: str = a[1]
+        logging.info("Found SOAP(DM) Cookie: " + cookie)
+        return cookie
+    else:
+        return ""
+
 
 
 def send_get_property(_property: str, _session: requests.Session, _dmcookie: str, _host: str) -> requests.Response:
-    logging.debug("Enter send_get_property")
+    loggger = logging.getLogger("pyeasycmd" + "." + "send_get_property")
+    loggger.debug("Enter send_get_property")
     url_data_model = "https://" + _host + "/data_model.cgi"
     body_request = """
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
@@ -84,13 +102,16 @@ def send_get_property(_property: str, _session: requests.Session, _dmcookie: str
 def get_authkey(_session: requests.Session, _host: str) -> str:
     logging.debug("Enter get_authkey")
     rsconfig = send_get_rsconfig(_session, _host)
-    find_auth_key: re.Match[str] = re.search(
-        "var auth_key = \'(\d*)\'", rsconfig.text)
+    find_auth_key: re.Match[str] | None = re.search(
+        "var auth_key = \'(\\d*)\'", rsconfig.text)
     # take auth_key from capture group
-    _auth_key: str = find_auth_key[1]
-    logging.info("found authkey:")
-    logging.info(_auth_key)
-    return _auth_key
+    if (find_auth_key is not None):
+        _auth_key: str = find_auth_key[1]
+        logging.info("found authkey:")
+        logging.info(_auth_key)
+        return _auth_key
+    else:
+        return ""
 
 
 def get_login_cookie(_session: requests.Session, _passw: str, _host: str, _val_dm_cookie: str) -> str:
@@ -141,18 +162,19 @@ def get_login_cookie(_session: requests.Session, _passw: str, _host: str, _val_d
 
 
 def get_single_value(_property: str, _session: requests.Session, _dm_cookie: str, _host: str) -> str | None:
-    logging.debug("get_single_value")
+    logger = logging.getLogger("pyeasycmd" + "." + "get_single_value")
+    logger.debug("get_single_value")
     res: requests.Response = send_get_property(
         _property, _session, _dm_cookie, _host)
     recon: str = res.content.decode("utf-8")
     tree = ET.fromstring(recon)
     siva = tree.findtext("*//Value")
     if siva == None:
-        logging.debug("no value received, returning error as value")
+        logger.debug("no value received, returning error as value")
         siva = tree.findtext("*//FaultLang")
     else:
         # logging.debug("'", siva, "'")
-        logging.debug("Got/Returning: " + siva)
+        logger.debug("Got/Returning: " + siva)
     return siva
 
 
@@ -224,8 +246,9 @@ def log_debug_element(_elem: ET.Element):
 
 
 def log_keyvalue(keyval: dict[str, str]):
+    logger: logging.Logger = logging.getLogger("pyeasycmd" + "." + "log_keyvalue")
     for key, val in keyval.items():
-        logging.debug(key + ": " + val)
+        logger.debug(key + ": " + val)
 
 
 def log_type(_var: Any, _varname: str):
@@ -233,13 +256,14 @@ def log_type(_var: Any, _varname: str):
     logging.debug(type(_var))
 
 
-def log_debug_raw_response(resp: requests.Response):
-    logging.debug("Raw Cookie:")
-    logging.debug(resp.cookies)
-    logging.debug("Raw Header:")
-    logging.debug(resp.headers)
-    logging.debug("Raw Response")
-    logging.debug(resp.text)
+def log_debug_raw_response(resp: requests.Response | aiohttp.ClientResponse):
+    logger = logging.getLogger("pyeasycmd" + "." + "log_debug_raw_response")
+    logger.debug("Raw Cookie:")
+    logger.debug(resp.cookies)
+    logger.debug("Raw Header:")
+    logger.debug(resp.headers)
+    logger.debug("Raw Response")
+    logger.debug(resp.text)
 
 
 # TODO: check if type TextIOWrapper is better fitting
