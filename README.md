@@ -41,12 +41,12 @@ Simple python tool for communicating with an easybox router
 
 ### lets start with help
 
-`python3 easystats.py -h`
+`python3 pyeasycmd.py -h`
 
 ### current output
 
 ```
-usage: easystats.py [-h] [-i INPUTFILE] [-a [No-Value/True/False]] [-e EXPORTFILE] [-k [KEY ...]]
+usage: pyeasycmd.py [-h] [-i INPUTFILE] [-a [No-Value/True/False]] [-e EXPORTFILE] [-k [KEY ...]]
 
 Get metadata from easybox
 
