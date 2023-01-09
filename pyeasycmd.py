@@ -1,13 +1,14 @@
 # import libraries
 import logging
-from scr import scr_ip_host, scr_passw, scr_router_pub_cert
+import os
+import scr
+#from .scr import scr_ip_host, scr_passw, scr_router_pub_cert
 #from pyeasylib import *
-from pyeasylib import get_single_value, log_keyvalue, get_login_cookie, get_session, get_dm_cookie, send_get_property, write_keyvalue_json, post_close_con, log_debug_tree, interpret_ParameterValueStruct
+from pyeasylib import get_single_value, log_keyvalue, get_login_cookie, get_session, get_dm_cookie, send_get_property, write_keyvalue_json, post_close_con, log_debug_tree, interpret_ParameterValueStruct, get_session_async_aio, get_dm_cookie_async_aio, get_single_value_async_aio, post_close_con_async_aio
 #from datetime import datetime
 import argparse
 import requests
 import xml.etree.ElementTree as ET
-
 
 #LOG_LEVEL = logging.ERROR
 LOG_LEVEL = logging.DEBUG
@@ -18,14 +19,16 @@ logging.basicConfig(encoding='utf-8', level=LOG_LEVEL,
 
 logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+logger = logging.getLogger('pyeasycmd')
+
 # Disable HTTP Error 302 "Resetting dropped connection" beeing logged
 # logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
-logging.info("easycmd started")
+logger.info("easycmd started")
 
 secrets_file = "scr.py"
-logging.debug("secrets_file: " + secrets_file)
-logging.debug("if required to change - remind the import statement")
+logger.debug("secrets_file: " + secrets_file)
+logger.debug("if required to change - remind the import statement")
 
 additional_info_helptext = """
 --key | --inputfile     You are able to choose only one input method, either by file or by key
@@ -46,12 +49,13 @@ parser.add_argument('-k', '--key', type=str, nargs='*',
                     help='The key to query, example: -k "InternetGatewayDevice.DeviceInfo.SoftwareVersion"')
 parser.add_argument('-m', '--multikey', type=str, nargs='*',
                     help='A key to query with an array as a result, example: -m "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANIPConnection.1.PortMapping."')
-
-logging.debug("Checking for Args..")
+parser.add_argument('-config', '--config', type=str, nargs='*',
+                    help='???')
+logger.debug("Checking for Args..")
 args = parser.parse_args()
-logging.debug("Found Args:")
-logging.debug(args)
-logging.debug(
+logger.debug("Found Args:")
+logger.debug(args)
+logger.debug(
     "Checking for argument combination --inputfile and --key - throw error if found")
 if ((args.key) and (args.inputfile)):
     parser.error("Combination of --inputfile and --key detected" +
@@ -60,7 +64,7 @@ if ((args.key) and (args.inputfile)):
 
 def get_print_unauth():
 
-    logging.debug("Entering get_print_unauth")
+    logger.debug("Entering get_print_unauth")
 
     unauth_host: dict[str, str] = {
         "InternetGatewayDevice.LANDevice.1.Hosts.": "",
@@ -88,7 +92,7 @@ def get_print_unauth():
             key, s, val_dm_cookie, router_ip_host)
 
     for key, val in unauth_sp.items():
-        logging.debug("%s: %s", key, val)
+        logger.debug("%s: %s", key, val)
 
 
 def get_print_auth(_val_dm_cookie: str):
@@ -113,7 +117,7 @@ def get_print_auth(_val_dm_cookie: str):
     }
 
     # get authenticated soap login cookie (overwrite existing)
-    # logging.debug("Current val_dm_cookie: " + val_dm_cookie)
+    # logger.debug("Current val_dm_cookie: " + val_dm_cookie)
     val_dm_cookie: str = get_login_cookie(
         s, passw, router_ip_host, _val_dm_cookie)
 
@@ -126,9 +130,9 @@ def get_print_auth(_val_dm_cookie: str):
 if __name__ == '__main__':
 
     # import secrets
-    passw: str = scr_passw
-    router_ip_host: str = scr_ip_host
-    router_pub_cert = scr_router_pub_cert
+    passw: str = scr.scr_passw
+    router_ip_host: str = scr.scr_ip_host
+    router_pub_cert = scr.scr_router_pub_cert
 
     # setup session and handle exit
     with get_session(_verify=router_pub_cert) as s:
@@ -137,29 +141,28 @@ if __name__ == '__main__':
         val_dm_cookie = get_dm_cookie(_session=s, _host=router_ip_host)
 
         if (args.multikey):
-            logging.debug("multikey arg provided")
-            logging.debug(args.multikey)
+            logger.debug("multikey arg provided")
+            logger.debug(args.multikey)
             # TODO: next -> get Multi Value Response (and understand it, see log ports)
-            # do auth
-            val_dm_cookie = get_login_cookie(
-                s, passw, router_ip_host, val_dm_cookie)
+            if (args.authenticate):
+                val_dm_cookie = get_login_cookie(s, passw, router_ip_host, val_dm_cookie)
             resp2: requests.models.Response = send_get_property(
                 args.multikey[0], s, val_dm_cookie, router_ip_host)
             # woanders auch direkt als root bezeichnet
             tree: ET.ElementTree = ET.fromstring(resp2.content)
             log_debug_tree(tree)
             res = interpret_ParameterValueStruct(tree)
-            logging.debug("returning dict:")
+            logger.debug("returning dict:")
             log_keyvalue(res)
             #! alternate solution required, duplicate export code!
             if (args.exportfile):
                 write_keyvalue_json(res, args.exportfile)
 
         if (args.key):
-            logging.debug("key arg provided")
-            logging.debug(args.key)
+            logger.debug("key arg provided")
+            logger.debug(args.key)
             newkeys = {key: "" for key in args.key}
-            logging.debug(newkeys)
+            logger.debug(newkeys)
 
             # singe with multi?
             # function that checks reply
@@ -174,15 +177,18 @@ if __name__ == '__main__':
                 write_keyvalue_json(newkeys, args.exportfile)
 
         if (args.inputfile):
-            logging.debug("inputfile arg provided")
+            logger.debug("inputfile arg provided")
             str_readdata = args.inputfile.read()
-            logging.debug(str_readdata)
-            logging.debug("check file")
+            logger.debug(str_readdata)
+            logger.debug("check file")
             ary_readdata = str_readdata.split()
-            logging.debug(ary_readdata)
+            logger.debug(ary_readdata)
 
             newkeys = {key: "" for key in ary_readdata}
-            logging.debug(newkeys)
+            logger.debug(newkeys)
+
+            if (args.authenticate):
+                val_dm_cookie = get_login_cookie(s, passw, router_ip_host, val_dm_cookie)
 
             for key, val in newkeys.items():
                 newkeys[key] = get_single_value(
@@ -197,4 +203,5 @@ if __name__ == '__main__':
         # get_print_auth(val_dm_cookie)
 
         post_close_con(router_ip_host, s)
-        logging.debug("app exit/eof")
+        logger.debug("app exit/eof")
+
