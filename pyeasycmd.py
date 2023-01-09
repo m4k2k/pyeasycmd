@@ -205,3 +205,39 @@ if __name__ == '__main__':
         post_close_con(router_ip_host, s)
         logger.debug("app exit/eof")
 
+
+async def get_multi_key_value(_inputkeys: list[str] = []) -> dict[str, str]:
+    logger.debug("ENTER get_multi_key_value")
+    # import secrets
+    #passw: str = scr_passw
+    router_ip_host: str = scr.scr_ip_host
+    router_pub_cert = scr.scr_router_pub_cert
+
+    logger.debug("checking if certificate file %s exists", router_pub_cert)
+    if (os.path.exists(router_pub_cert)):
+        logger.info("cert file found: %s", router_pub_cert)
+    else:
+        logger.error("cert file is not found: %s", router_pub_cert)
+    logger.debug("get session async")
+    s = await get_session_async_aio(_verify=router_pub_cert)
+    logger.debug("get soap cookie async")
+    val_dm_cookie = await get_dm_cookie_async_aio(_session=s, _host=router_ip_host)
+    logger.info("got the cookie: %s", val_dm_cookie)
+    logger.debug("prepare keys for fetch")
+    newkeys = {key: "" for key in _inputkeys}
+    logger.debug("keys:")
+    logger.debug(newkeys)
+    
+    # singe with multi?
+    # function that checks reply
+    # if single or array, then interpret
+    logger.debug("fetch data")
+    for key, val in newkeys.items():
+        newkeys[key] = await get_single_value_async_aio(
+            key, s, val_dm_cookie, router_ip_host)
+    logger.info("got data:")
+    log_keyvalue(newkeys)
+    logger.info("closing connection and session")
+    await post_close_con_async_aio(router_ip_host, s)
+    logger.debug("EXIT function/eof get_multi_key_value")
+    return newkeys
