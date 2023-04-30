@@ -1,3 +1,9 @@
+
+# THIS README IS OUTDATED
+tldr: run in home folder e.g. python -m pyeasycmd -rn
+D:\Users\Test\Documents\Myfolder> python -m pyeasycmd -rn
+while pyeasycmd is at D:\Users\Test\Documents\Myfolder\pyeasycmd\
+
 # pyeasycmd
 
 Simple python tool for communicating with an easybox router
