@@ -1,8 +1,11 @@
 
 # THIS README IS OUTDATED
-tldr: run in home folder e.g. python -m pyeasycmd -rn
-D:\Users\Test\Documents\Myfolder> python -m pyeasycmd -rn
-while pyeasycmd is at D:\Users\Test\Documents\Myfolder\pyeasycmd\
+tldr:
+run like every other python module e.g. `python -m pyeasycmd -rn`
+
+D:\Users\Test\Documents\Myfolder\pyeasycmd> `python -m pyeasycmd -rn`
+
+while `D:\Users\Test\Documents\Myfolder\pyeasycmd\` is the root folder of the git repo
 
 # pyeasycmd
 
