@@ -6,6 +6,7 @@ RESEARCH.md
 scr.py
 *.cer
 *test*.py
+pyeasycmd_config.ini
 
 # data output formats
 *.csv
