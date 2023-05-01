@@ -1,4 +1,5 @@
-DEFAULT_CONFIG_PATH: str = "./pyeasycmd_config.ini"
+DEFAULT_SYS_CONFIG_PATH: str = "./pyeasycmd_config.ini"
+DEFAULT_USR_CONFIG_PATH: str = "#USERHOME#/.pyeasycmd_config.ini"
 
 scr_passw: str | None = None
 scr_ip_host: str | None = None

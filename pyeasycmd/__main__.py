@@ -1,10 +1,11 @@
 # import libraries
 import argparse
 import asyncio
+import os
 import logging
 import xml.etree.ElementTree as ET
 import pyeasycmd.const
-from pyeasycmd.const import DEFAULT_CONFIG_PATH, ERROR_MSG_CONFIG_PARSER_FAILED
+from pyeasycmd.const import DEFAULT_SYS_CONFIG_PATH, ERROR_MSG_CONFIG_PARSER_FAILED, DEFAULT_USR_CONFIG_PATH
 
 import requests
 from pyeasycmd.api import get_routerName
@@ -107,7 +108,11 @@ def main():
     if args.configfile:
         parse_config(args.configfile)
     else:
-        parse_config(DEFAULT_CONFIG_PATH)
+        usrpath: str = DEFAULT_USR_CONFIG_PATH.replace('#USERHOME#', '~').replace('/', os.path.sep)
+        if os.path.isfile(usrpath):
+            parse_config(DEFAULT_SYS_CONFIG_PATH)
+        else:
+            parse_config(DEFAULT_SYS_CONFIG_PATH)
 
     # import secrets
     if pyeasycmd.const.scr_passw is not None and pyeasycmd.const.scr_ip_host is not None and pyeasycmd.const.scr_router_pub_cert is not None:
