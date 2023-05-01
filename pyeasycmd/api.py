@@ -10,6 +10,8 @@ from pyeasycmd.pyeasylib import (
     log_keyvalue,
     post_close_con_async_aio,
     send_get_lang_async_aio,
+    parse_config,
+    get_userconfig_path,
 )
 import pyeasycmd.const
 
@@ -21,6 +23,10 @@ logger = logging.getLogger("pyeasycmd.api")
 
 
 async def get_routerName() -> str:
+    if not pyeasycmd.const.configloaded:
+        usrpath: str = get_userconfig_path()
+        if os.path.isfile(usrpath):
+            parse_config(usrpath)
     # TODO: put host/cert in function args, with default filling
     router_ip_host: str = pyeasycmd.const.scr_ip_host
     router_pub_cert = pyeasycmd.const.scr_router_pub_cert

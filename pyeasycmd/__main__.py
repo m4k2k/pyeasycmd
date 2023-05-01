@@ -21,6 +21,7 @@ from pyeasycmd.pyeasylib import (
     send_get_property,
     write_keyvalue_json,
     parse_config,
+    get_userconfig_path,
 )
 
 
@@ -108,21 +109,25 @@ def main():
     if args.configfile:
         parse_config(args.configfile)
     else:
-        usrpath: str = DEFAULT_USR_CONFIG_PATH.replace('#USERHOME#', '~').replace('/', os.path.sep)
+        usrpath: str = get_userconfig_path()
         if os.path.isfile(usrpath):
-            parse_config(DEFAULT_SYS_CONFIG_PATH)
+            parse_config(usrpath)
         else:
             parse_config(DEFAULT_SYS_CONFIG_PATH)
 
     # import secrets
-    if pyeasycmd.const.scr_passw is not None and pyeasycmd.const.scr_ip_host is not None and pyeasycmd.const.scr_router_pub_cert is not None:
+    if (
+        pyeasycmd.const.scr_passw is not None
+        and pyeasycmd.const.scr_ip_host is not None
+        and pyeasycmd.const.scr_router_pub_cert is not None
+    ):
         passw: str = pyeasycmd.const.scr_passw
         router_ip_host: str = pyeasycmd.const.scr_ip_host
         router_pub_cert: str | bool = pyeasycmd.const.scr_router_pub_cert
     else:
         logger.error(ERROR_MSG_CONFIG_PARSER_FAILED)
         raise FileNotFoundError(1, ERROR_MSG_CONFIG_PARSER_FAILED)
-    #router_pub_cert = False
+
     # setup session and handle exit
     logger.debug("get_session for certificate: %s", router_pub_cert)
     with get_session(_verify=router_pub_cert) as s:
