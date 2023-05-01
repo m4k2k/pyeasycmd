@@ -428,8 +428,13 @@ def write_keyvalue_json(keyval: dict[str, str], filestream: Any):
 
 #################################################################################
 
+def get_userconfig_path() -> str:
+    return pyeasycmd.const.DEFAULT_USR_CONFIG_PATH.replace('#USERHOME#', '~').replace('/', os.path.sep)
+
+
 def remove_quotes(s: str) -> str:
     return s.strip('"')
+
 
 def parse_config(f: str | TextIOWrapper):
     _f = f
@@ -459,6 +464,8 @@ def parse_config(f: str | TextIOWrapper):
     pyeasycmd.const.scr_passw = remove_quotes(config["MAIN"]["passw"])
     pyeasycmd.const.scr_ip_host = remove_quotes(config["MAIN"]["hostname"])
     pyeasycmd.const.scr_router_pub_cert = remove_quotes(config["MAIN"]["certificate"])
+
+    pyeasycmd.const.configloaded = True
 
     logger.debug("EXIT parse_config")
 
