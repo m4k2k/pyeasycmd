@@ -1,0 +1,5 @@
+[MAIN]
+hostname = "easy.box"
+passw = "secretpass123"
+# path to base64 router certificate - or set to False to disable certificate check
+certificate = "C:\Users\Test\Desktop\testcert.cer"
