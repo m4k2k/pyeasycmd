@@ -21,12 +21,14 @@ LOG_LEVEL = logging.DEBUG
 
 logger = logging.getLogger("pyeasycmd.api")
 
+async def workaround_config():
+    if not pyeasycmd.const.configloaded:
+    usrpath: str = get_userconfig_path()
+    if os.path.isfile(usrpath):
+        parse_config(usrpath)
 
 async def get_routerName() -> str:
-    if not pyeasycmd.const.configloaded:
-        usrpath: str = get_userconfig_path()
-        if os.path.isfile(usrpath):
-            parse_config(usrpath)
+    await workaround_config()
     # TODO: put host/cert in function args, with default filling
     router_ip_host: str = pyeasycmd.const.scr_ip_host
     router_pub_cert = pyeasycmd.const.scr_router_pub_cert
@@ -49,6 +51,7 @@ async def get_routerName() -> str:
 
 
 async def get_multi_key_value(_inputkeys: list[str] = []) -> dict[str, str]:
+    await workaround_config()
     # TODO: Implement get_multi_key_value with authentication
     logger.debug("ENTER get_multi_key_value")
     router_ip_host: str = pyeasycmd.const.scr_ip_host
