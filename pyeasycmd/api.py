@@ -21,6 +21,7 @@ LOG_LEVEL = logging.DEBUG
 
 logger = logging.getLogger("pyeasycmd.api")
 
+
 async def workaround_config():
     if not pyeasycmd.const.configloaded:
         logger.debug("User config not loaded, loading now")
@@ -29,6 +30,8 @@ async def workaround_config():
         if os.path.isfile(usrpath):
             logger.debug("userconfig file exists, now loading..")
             parse_config(usrpath)
+    else:
+        logger.debug("User config already loaded, no workaround action necessary")
 
 
 async def get_routerName() -> str:
