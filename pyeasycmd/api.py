@@ -11,10 +11,10 @@ from pyeasycmd.pyeasylib import (
     post_close_con_async_aio,
     send_get_lang_async_aio,
 )
-from pyeasycmd.scr import scr_ip_host, scr_router_pub_cert
+import pyeasycmd.const
 
-# LOG_LEVEL = logging.DEBUG
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
+# LOG_LEVEL = logging.INFO
 # LOG_LEVEL = logging.ERROR
 
 logger = logging.getLogger("pyeasycmd.api")
@@ -22,13 +22,13 @@ logger = logging.getLogger("pyeasycmd.api")
 
 async def get_routerName() -> str:
     # TODO: put host/cert in function args, with default filling
-    router_ip_host: str = scr_ip_host
-    router_pub_cert = scr_router_pub_cert
+    router_ip_host: str = pyeasycmd.const.scr_ip_host
+    router_pub_cert = pyeasycmd.const.scr_router_pub_cert
 
     logger.debug("ENTER get_routername")
     logger.debug("get session")
     s: aiohttp.ClientSession = await get_session_async_aio(_verify=router_pub_cert)
-    logger.debug("request lang file")
+    logger.debug("request lang file from %s", router_ip_host)
     cr: aiohttp.ClientResponse = await send_get_lang_async_aio(_session=s, _host=router_ip_host)
     logger.debug("transform to string")
     tx = await cr.text()
@@ -45,8 +45,8 @@ async def get_routerName() -> str:
 async def get_multi_key_value(_inputkeys: list[str] = []) -> dict[str, str]:
     # TODO: Implement get_multi_key_value with authentication
     logger.debug("ENTER get_multi_key_value")
-    router_ip_host: str = scr_ip_host
-    router_pub_cert = scr_router_pub_cert
+    router_ip_host: str = pyeasycmd.const.scr_ip_host
+    router_pub_cert = pyeasycmd.const.scr_router_pub_cert
 
     logger.debug("checking if certificate file %s exists", router_pub_cert)
     if os.path.exists(router_pub_cert):

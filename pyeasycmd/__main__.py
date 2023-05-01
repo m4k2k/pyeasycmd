@@ -3,6 +3,8 @@ import argparse
 import asyncio
 import logging
 import xml.etree.ElementTree as ET
+import pyeasycmd.const
+from pyeasycmd.const import DEFAULT_CONFIG_PATH, ERROR_MSG_CONFIG_PARSER_FAILED
 
 import requests
 from pyeasycmd.api import get_routerName
@@ -17,11 +19,13 @@ from pyeasycmd.pyeasylib import (
     post_close_con,
     send_get_property,
     write_keyvalue_json,
+    parse_config,
 )
-from pyeasycmd.scr import scr_ip_host, scr_passw, scr_router_pub_cert
 
-# LOG_LEVEL = logging.DEBUG
-LOG_LEVEL = logging.INFO
+
+
+LOG_LEVEL = logging.DEBUG
+# LOG_LEVEL = logging.INFO
 # LOG_LEVEL = logging.ERROR
 
 # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
@@ -31,10 +35,10 @@ logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 logger = logging.getLogger("pyeasycmd")
 
-# Disable HTTP Error 302 "Resetting dropped connection" beeing logged
+# Disable HTTP Error 302 "Resetting dropped connection" being logged
 # logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
-logger.info("easycmd started")
+logger.info("pyeasycmd started")
 
 secrets_file = "scr.py"
 logger.debug("secrets_file: %s", secrets_file)
@@ -84,7 +88,10 @@ def main():
         nargs="*",
         help='A key to query with an array as a result, example: -m "InternetGatewayDevice.WANDevice.6.WANConnectionDevice.4.WANIPConnection.1.PortMapping."',
     )
-    parser.add_argument("-config", "--config", type=str, nargs="*", help="???")
+    parser.add_argument(
+        "-c", "--configfile", type=argparse.FileType("r"), help="OPTIONAL: overwrite default config file path"
+    )
+
     logger.debug("Checking for Args..")
     args = parser.parse_args()
     logger.debug("Found Args:")
@@ -95,15 +102,24 @@ def main():
 
     logger.debug("Checking if we know what to do (if any argument is provided)")
     if args.router_name is False and args.inputfile is None and args.key is None and args.multikey is None:
-        # (inputfile=None, authenticate=False, exportfile=None, router_name=False, key=None, multikey=None, config=None)
         parser.error("No argument passed, please provide an argument, try --help to get help")
 
-    # import secrets
-    passw: str = scr_passw
-    router_ip_host: str = scr_ip_host
-    router_pub_cert = scr_router_pub_cert
+    if args.configfile:
+        parse_config(args.configfile)
+    else:
+        parse_config(DEFAULT_CONFIG_PATH)
 
+    # import secrets
+    if pyeasycmd.const.scr_passw is not None and pyeasycmd.const.scr_ip_host is not None and pyeasycmd.const.scr_router_pub_cert is not None:
+        passw: str = pyeasycmd.const.scr_passw
+        router_ip_host: str = pyeasycmd.const.scr_ip_host
+        router_pub_cert: str | bool = pyeasycmd.const.scr_router_pub_cert
+    else:
+        logger.error(ERROR_MSG_CONFIG_PARSER_FAILED)
+        raise FileNotFoundError(1, ERROR_MSG_CONFIG_PARSER_FAILED)
+    #router_pub_cert = False
     # setup session and handle exit
+    logger.debug("get_session for certificate: %s", router_pub_cert)
     with get_session(_verify=router_pub_cert) as s:
         # get soap cookie, session cookie is stored in session
         val_dm_cookie = get_dm_cookie(_session=s, _host=router_ip_host)
@@ -152,9 +168,6 @@ def main():
 
             newkeys = {key: "" for key in ary_readdata}
             logger.debug(newkeys)
-
-            # if (args.authenticate):
-            #     val_dm_cookie = get_login_cookie(s, passw, router_ip_host, val_dm_cookie)
 
             for key, val in newkeys.items():
                 newkeys[key] = get_single_value(key, s, val_dm_cookie, router_ip_host)

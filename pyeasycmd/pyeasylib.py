@@ -1,3 +1,6 @@
+import configparser
+from io import TextIOWrapper
+import os
 import ast
 import hashlib
 import json
@@ -6,15 +9,16 @@ import re
 import ssl
 import xml.etree.ElementTree as ET
 from typing import Any
-
 import aiohttp
+import pyeasycmd
 import requests
+import pyeasycmd.const
 
 basic_header = {"content-type": "text/xml"}
 
 
-# LOG_LEVEL = logging.DEBUG
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
+# LOG_LEVEL = logging.INFO
 # LOG_LEVEL = logging.ERROR
 
 # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
@@ -46,15 +50,15 @@ def get_session(_verify: str | bool = True) -> requests.Session:
 
 async def send_emptyrequest_async_aio(_session: aiohttp.ClientSession, _host: str) -> aiohttp.ClientResponse:
     logger = logging.getLogger("pyeasycmd" + "." + "send_emptyrequest_async")
-    logger.debug("ENTER send_emptyrequest")
+    logger.debug("ENTER send_emptyrequest_async_aio")
     url: str = "https://" + _host + "/main.cgi"
     body = ""
-    logger.debug("async post")
+    logger.debug("async post to: %s", _host)
     req = _session.post(url=url, data=body, headers=basic_header)
     repl = await req
     logger.debug("##### reply:")
     log_debug_raw_response(repl)
-    logger.debug("EXIT send_emptyrequest")
+    logger.debug("EXIT send_emptyrequest_async_aio")
     return repl
 
 
@@ -62,8 +66,10 @@ def send_emptyrequest(_session: requests.Session, _host: str) -> requests.Respon
     logging.debug("Enter send_emptyrequest")
     url: str = "https://" + _host + "/main.cgi"
     body = ""
+    logger.debug("sync post to: %s", _host)
     repl = _session.post(url, data=body, headers=basic_header)
     # print_raw_response(repl)
+    logger.debug("EXIT send_emptyrequest")
     return repl
 
 
@@ -419,5 +425,41 @@ def write_keyvalue_json(keyval: dict[str, str], filestream: Any):
     filestream.write(json_object)
     filestream.close()
 
+
+#################################################################################
+
+def remove_quotes(s: str) -> str:
+    return s.strip('"')
+
+def parse_config(f: str | TextIOWrapper):
+    _f = f
+    logger.debug("ENTER parse_config")
+    if isinstance(_f, str):
+        logger.debug("got a string configfile at: %s", _f)
+        _f = os.path.abspath(_f)
+        logger.debug("full path of configfile is: %s", _f)
+        if os.path.isfile(_f):
+            logger.debug("configfile found/exists")
+        else:
+            logger.error(pyeasycmd.const.ERROR_MSG_CONFIG_FILE_NOTFOUND)
+            raise FileNotFoundError(1, pyeasycmd.const.ERROR_MSG_CONFIG_FILE_NOTFOUND, _f)
+    if isinstance(f, TextIOWrapper):
+        logger.debug("got a TextIOWrapper configfile")
+
+    # init config parser
+    config = configparser.ConfigParser()
+    # read config and output config file
+    logger.debug("config: %s", config.read(_f))
+    # output all sections and its keys
+    for s in config.sections():
+        logger.debug("section: %s", s)
+        logger.debug("keys: %s", list(config[s].keys()))
+
+    # assign config to const/variables
+    pyeasycmd.const.scr_passw = remove_quotes(config["MAIN"]["passw"])
+    pyeasycmd.const.scr_ip_host = remove_quotes(config["MAIN"]["hostname"])
+    pyeasycmd.const.scr_router_pub_cert = remove_quotes(config["MAIN"]["certificate"])
+
+    logger.debug("EXIT parse_config")
 
 #################################################################################
