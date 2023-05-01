@@ -428,8 +428,10 @@ def write_keyvalue_json(keyval: dict[str, str], filestream: Any):
 
 #################################################################################
 
+
 def get_userconfig_path() -> str:
-    return pyeasycmd.const.DEFAULT_USR_CONFIG_PATH.replace('#USERHOME#', '~').replace('/', os.path.sep)
+    usrpath1: str = pyeasycmd.const.DEFAULT_USR_CONFIG_PATH.replace("#USERHOME#", "~").replace("/", os.path.sep)
+    return os.path.expanduser(usrpath1)
 
 
 def remove_quotes(s: str) -> str:
@@ -468,5 +470,6 @@ def parse_config(f: str | TextIOWrapper):
     pyeasycmd.const.configloaded = True
 
     logger.debug("EXIT parse_config")
+
 
 #################################################################################
