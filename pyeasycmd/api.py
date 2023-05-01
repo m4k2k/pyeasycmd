@@ -23,9 +23,9 @@ logger = logging.getLogger("pyeasycmd.api")
 
 async def workaround_config():
     if not pyeasycmd.const.configloaded:
-    usrpath: str = get_userconfig_path()
-    if os.path.isfile(usrpath):
-        parse_config(usrpath)
+        usrpath: str = get_userconfig_path()
+        if os.path.isfile(usrpath):
+            parse_config(usrpath)
 
 async def get_routerName() -> str:
     await workaround_config()
