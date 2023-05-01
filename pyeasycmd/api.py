@@ -23,9 +23,13 @@ logger = logging.getLogger("pyeasycmd.api")
 
 async def workaround_config():
     if not pyeasycmd.const.configloaded:
+        logger.debug("User config not loaded, loading now")
         usrpath: str = get_userconfig_path()
+        logger.debug("trying path of userconfig: %s", usrpath)
         if os.path.isfile(usrpath):
+            logger.debug("userconfig file exists, now loading..")
             parse_config(usrpath)
+
 
 async def get_routerName() -> str:
     await workaround_config()
@@ -58,7 +62,7 @@ async def get_multi_key_value(_inputkeys: list[str] = []) -> dict[str, str]:
     router_pub_cert = pyeasycmd.const.scr_router_pub_cert
 
     logger.debug("checking if certificate file %s exists", router_pub_cert)
-    if os.path.exists(router_pub_cert):
+    if os.path.isfile(router_pub_cert):
         logger.info("cert file found: %s", router_pub_cert)
     else:
         logger.error("cert file not found: %s", router_pub_cert)
