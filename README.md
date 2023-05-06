@@ -1,11 +1,17 @@
 
 # THIS README IS OUTDATED
-tldr:
+
+some useful (not outdated hints)
+
 run like every other python module e.g. `python -m pyeasycmd -rn`
 
 D:\Users\Test\Documents\Myfolder\pyeasycmd> `python -m pyeasycmd -rn`
 
 while `D:\Users\Test\Documents\Myfolder\pyeasycmd\` is the root folder of the git repo
+
+install lib in dev branch using pip: `pip install "git+https://github.com/m4k2k/pyeasycmd.git@dev"`
+
+# OUTDATED:
 
 # pyeasycmd
 
@@ -33,7 +39,7 @@ Simple python tool for communicating with an easybox router
 ### contribution
 
 - suggestions welcome
-- codereview welcome
+- code review welcome
 - pull-requests welcome
 
 ## files and what they do
@@ -136,3 +142,17 @@ docker run -it --rm pyeasycmd:latest /bin/bash
 # get information for one key using docker
 docker run -it -e "cmd=-k InternetGatewayDevice.DeviceInfo.SoftwareVersion" --rm pyeasycmd:latest
 ```
+
+## DISCLAIMER
+
+All trademarks and registered trademarks mentioned herein are the property of their
+respective owners.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS 
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT 
+SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY 
+CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES 
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF 
+CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
+WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
